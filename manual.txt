@@ -1,0 +1,305 @@
+DESCRIPTION
+Package: voomDDA
+Title: Voom Based Diagonal Discriminant Analysis for RNA-Seq Data Classification
+Version: 1.0.0
+Author: Gokmen Zararsiz, Dincer Goksuluk, Selcuk Korkmaz
+Description: Some functions for sample classification in RNA-Seq data
+Maintainer: Gokmen Zararsiz <gokmenzararsiz@erciyes.edu.tr>
+Depends: R (>= 3.1.0), pamr, limma
+Suggests: MLSeq
+License: GPL-2
+...
+
+####
+
+weighted.stats{voomDDA}
+
+Calculation of Weighted Statistics
+
+Description
+This function calculates several weighted statistics that is necessary for voomDDA and voomNSC classifiers.
+
+Usage
+weighted.stats(x = x, w = w, conditions = conditions)
+
+Arguments
+x: a data matrix with n columns and p rows, whose weighted statistics is to be computed. Rows indicate genes, where columns indicate samples.
+w: a weight matrix with n columns and p rows. 
+conditions: a numeric or factor vector containing the outcome for each sample representing experimental conditions.
+
+Details
+voom function in limma package takes RNA-Seq read counts as input, applies voom transformation and produces both expression values and weights in a pxn data matrix. weighted.stats calculates a number of statistics that is necessary for other functions in this package. These functions can be used to classify RNA-Seq data using voom precision weights.
+
+Value
+n: number of samples
+p: number of genes
+nclass: number of class
+se.scale: scale factors for the within class standard errors defined as sqrt(1/n.class-1/n)
+weightedMean: overall weighted means for each gene
+weightedMean.C: weighted means calculated for each gene in each class
+WeightedSD.C: weighted standard deviations calculated for each gene in each class
+weightedSD.pooled: overall pooled and weighted standard deviations for each gene
+delta: a matrix containing the relative differences, also called as t scores, in gene expression for each group
+
+Authors
+Gokmen Zararsiz (gokmenzararsiz@erciyes.edu.tr), Dincer Goksuluk (dincer.goksuluk@hacettepe.edu.tr), Selcuk Korkmaz (selcuk.korkmaz@hacettepe.edu.tr)
+
+References
+Law CW, Chen Y, Shi W, et al. (2014). voom: precision weights unlock linear model analysis tools for RNA-seq read counts. Genome Biology, doi:10.1186/gb-2014-15-2-r29
+Tibshirani R, Hastie T, Narasimhan B, et al. (2002). Diagnosis of multiple cancer types by shrunken centroids of gene expression PNAS 99: 6567-72.
+
+Examples
+# weighted statistics will be calculated for Fisher's iris data
+x = as.matrix(iris[,1:4])
+
+# generate some data for weight matrix
+w = matrix(rnorm(150*4) + 1, ncol=4)
+
+# iris data outcome
+conditions = iris[,5]
+
+# calculate weighted statistics
+weighted.stats(t(x), t(w), conditions)
+
+####
+
+voomDDA.train{voomDDA}
+
+Train a Voom Based Diagonal Discriminant Analysis for RNA-Seq Classification
+
+Description
+A function that applies voom based diagonal discriminant analysis to train and classify RNA-Seq data
+
+Usage
+voomDDA.train(counts, conditions, normalization = "TMM", pooled.var = TRUE)
+
+Arguments
+counts: numeric pxn matrix or data frame of read counts. Rows correspond to p genes (transcripts, exons, etc.), while columns correspont to biological samples.
+conditions: factor or numeric vector for class labels representing experimental conditions
+normalization: normalization of count data to adjust sample spesific differences before classification. tmm: Trimmed mean of M values. quantile: quantile normalization. none: Normalization is not applied. 
+pooled.var: logical flag. If true (by default), the covariance matrices are assumed to be constant across classes and voomDLDA linear classifier is used. Otherwise (pool= FALSE), the covariance matrices may vary across classes and voomDQDA quadratic classifier is used.
+
+Details
+voomDDA is an RNA-Seq classifier which takes read counts as input, applies voom transformation and incorporates voom precision weights and log-cpm values in an extension of diagonal discriminant analysis for prediction.
+
+Value
+classNames: names of each experimental condition
+nclass: number of class
+normalization: used normalization model in the training process
+PooledVar: TRUE - voom based diagonal linear discriminant analysis (voomDLDA). FALSE - voom based diagonal quadratic discriminant analysis (voomDQDA)
+weightedStats: returns the same as weightedStats()
+
+Authors
+Gokmen Zararsiz (gokmenzararsiz@erciyes.edu.tr), Dincer Goksuluk (dincer.goksuluk@hacettepe.edu.tr), Selcuk Korkmaz (selcuk.korkmaz@hacettepe.edu.tr)
+
+References
+Dudoit S, Fridlyand J, Speed TP (2000). Comparison of Discrimination Methods for the Classification of Tumors Using Gene Expression Data. (Statistics, UC Berkeley, June 2000, Tech Report \#576)
+Law CW, Chen Y, Shi W, et al. (2014). voom: precision weights unlock linear model analysis tools for RNA-seq read counts. Genome Biology, doi:10.1186/gb-2014-15-2-r29
+                                                                                                                                                    
+Examples
+#use cervical data in MLSeq package
+library(MLSeq)
+data(cervical)
+
+#create cervical conditions, train and test sets
+set.seed(12345)
+ratio=0.7
+conditions = factor(rep(c("N","T"), c(29,29)))
+ind = sample(58, ceiling(58*ratio), FALSE)
+train = cervical[,ind]
+test = cervical[,-ind]
+tr.cond = conditions[ind]
+ts.cond = conditions[-ind]
+
+#train a voomDLDA classifier using quantile normalization
+fit = voomDDA.train(counts = train, conditions = tr.cond, normalization = "quan", TRUE)
+
+#train a voomDQDA classifier using TMM normalization
+fit2 = voomDDA.train(counts = train, conditions = tr.cond, normalization = "TMM", FALSE)
+
+####
+
+predict.voomDDA{voomDDA}
+
+Extract Predictions From voomDDA.train() Objects
+
+Description
+This function predicts the class labels of test data for a given voomDDA model
+
+Usage
+predict.voomDDA(object, newdata)
+
+Arguments
+object: a fitted training model object after voomDDA.train()
+newdata: new test read count data to be predicted
+
+Details
+predict.voomDDA() function predicts the class labels of a test data based on the voomDDA training model.
+
+Value
+a vector of predicted classes of test data
+
+Authors
+Gokmen Zararsiz (gokmenzararsiz@erciyes.edu.tr), Dincer Goksuluk (dincer.goksuluk@hacettepe.edu.tr), Selcuk Korkmaz (selcuk.korkmaz@hacettepe.edu.tr)
+
+References
+Dudoit S, Fridlyand J, Speed TP (2000). Comparison of Discrimination Methods for the Classification of Tumors Using Gene Expression Data. (Statistics, UC Berkeley, June 2000, Tech Report \#576)
+Law CW, Chen Y, Shi W, et al. (2014). voom: precision weights unlock linear model analysis tools for RNA-seq read counts. Genome Biology, doi:10.1186/gb-2014-15-2-r29
+
+Examples
+#use cervical data in MLSeq package
+library(MLSeq)
+data(cervical)
+
+#create cervical conditions, train and test sets
+set.seed(12345)
+ratio=0.7
+conditions = factor(rep(c("N","T"), c(29,29)))
+ind = sample(58, ceiling(58*ratio), FALSE)
+train = cervical[,ind]
+test = cervical[,-ind]
+tr.cond = conditions[ind]
+ts.cond = conditions[-ind]
+
+#train a voomDLDA classifier using quantile normalization
+fit = voomDDA.train(counts = train, conditions = tr.cond, normalization = "quan", TRUE)
+
+#train a voomDQDA classifier using TMM normalization
+fit2 = voomDDA.train(counts = train, conditions = tr.cond, normalization = "TMM", FALSE)
+
+#predict the labels of test data classes and create a confusion matrix
+pred = predict.voomDDA(fit, test)
+table(ts.cond, pred)
+
+pred2 = predict.voomDDA(fit2, test)
+table(ts.cond, pred2)
+
+####
+
+voomNSC.train{voomDDA}
+
+Train a Voom Based Nearest Shrunken Centroids Classifier for RNA-Seq Classification
+
+Description
+A function that applies voom based nearest shrunken centroids classifier to train and classify RNA-Seq data
+
+Usage
+voomNSC.train(counts, conditions, n.threshold = 30, offset.percent = 50, remove.zeros = TRUE, normalization = "TMM")
+
+Arguments
+counts: numeric pxn matrix or data frame of read counts. Rows correspond to p genes (transcripts, exons, etc.), while columns correspont to biological samples.
+conditions: factor or numeric vector for class labels representing experimental conditions
+n.threshold : number of threshold values desired (default 30)
+offset.percent: Fudge factor added to the denominator of each t-statistic, expressed as a percentile of the gene standard deviation values. This is a small positive quantity to penalize genes with expression values near zero, which can result in very large ratios. This factor is expecially impotant for Affy data. Default is the median of the standard 
+deviations of each gene
+remove.zeros: remove threshold values yielding zero genes? Default TRUE
+normalization: normalization of count data to adjust sample spesific differences before classification. tmm: Trimmed mean of M values. quantile: quantile normalization. none: Normalization is not applied. 
+
+Details
+voomNSC is an RNA-Seq classifier which takes read counts as input, applies voom transformation and incorporates voom precision weights and log-cpm values in an extension of nearest shrunken centroids classifers for prediction.
+
+Value
+call: the calling sequence used
+weightedMean: a vector containing the overall weighted unshrunken centroids
+weightedMean.C: a matrix containing the weighted unshrunken centroids for each class
+delta: a matrix containing the relative differences, also called as t scores, in gene expression for each group
+errors: number of training errors for each threshold value
+nonzero: number of genes that survived the thresholding for each threshold value
+normalization: normalization of count data to adjust sample spesific differences before classification. tmm: Trimmed mean of M values. quantile: quantile normalization. none: Normalization is not applied.
+offset: offset.percent used in the training process
+opt.threshold: optimal threshold value that gives the minimum training error with the lowest number of genes
+prior: prior probabilities used in the training process (proportions of the class frequencies)
+prob: an array of predicted class probabilities. of dimension n by nclass by n.threshold. n is the number samples, nclass is the number of classes, n.threshold is the number of thresholds tried
+weightedSD.pooled: a vector of pooled and weighted standard deviations for each gene
+se.scale: scale factors for the within class standard errors defined as sqrt(1/n.class-1/n)
+SelectedGenes: names of genes that survived the thresholding for each threshold value
+SelectedGenesIndex: indexes of genes that survived the thresholding for each threshold value
+threshold: a vector of the threshold tried in the shrinkage
+conditions: conditions
+pred.conditions: a matrix containing the predicted class labels for each threshold value 
+
+Authors
+Trevor Hastie,Robert Tibshirani, Balasubramanian Narasimhan, and Gilbert Chu originally wrote pamr.train() in CRAN package pamr which was modified for RNA-Seq classification by Gokmen Zararsiz (gokmenzararsiz@erciyes.edu.tr), Dincer Goksuluk (dincer.goksuluk@hacettepe.edu.tr), Selcuk Korkmaz (selcuk.korkmaz@hacettepe.edu.tr)
+
+References
+Tibshirani R, Hastie T, Narasimhan B, et al. (2002). Diagnosis of multiple cancer types by shrunken centroids of gene expression PNAS 99: 6567-72.
+Dudoit S, Fridlyand J, Speed TP (2000). Comparison of Discrimination Methods for the Classification of Tumors Using Gene Expression Data. (Statistics, UC Berkeley, June 2000, Tech Report \#576)
+Law CW, Chen Y, Shi W, et al. (2014). voom: precision weights unlock linear model analysis tools for RNA-seq read counts. Genome Biology, doi:10.1186/gb-2014-15-2-r29
+                                                                                                                                                    
+Examples
+#use cervical data in MLSeq package
+library(MLSeq)
+data(cervical)
+
+#create cervical conditions, train and test sets
+set.seed(12345)
+ratio=0.7
+conditions = factor(rep(c("N","T"), c(29,29)))
+ind = sample(58, ceiling(58*ratio), FALSE)
+train = cervical[,ind]
+test = cervical[,-ind]
+tr.cond = conditions[ind]
+ts.cond = conditions[-ind]
+
+#train a voomNSC classifier using TMM normalization
+fit = voomNSC.train(counts = train, conditions = tr.cond, normalization = "TMM")
+
+####
+
+predict.voomNSC{voomDDA}
+
+Extract Predictions From voomNSC.train() Objects
+
+Description
+This function predicts the class labels of test data for a given voomNSC model
+
+Usage
+predict.voomNSC(fit, newdata, threshold = fit$opt.threshold, prior = fit$prior)
+
+Arguments
+fit: a fitted training model object after voomNSC.train()
+newdata: new test read count data to be predicted
+threshold: threshold value which will be used in the prediction process. default is fit$opt.threshold, the value that gives the minimum training error with the lowest number of genes
+prior: prior probabilities which will be used in the prediction process. default is fit$prior.
+
+Details
+predict.voomNSC() function predicts the class labels of a test data based on the voomNSC training model.
+
+Value
+a vector of predicted classes of test data
+
+Authors
+Trevor Hastie,Robert Tibshirani, Balasubramanian Narasimhan, and Gilbert Chu originally wrote pamr.train() in CRAN package pamr which was modified for RNA-Seq classification by Gokmen Zararsiz (gokmenzararsiz@erciyes.edu.tr), Dincer Goksuluk (dincer.goksuluk@hacettepe.edu.tr), Selcuk Korkmaz (selcuk.korkmaz@hacettepe.edu.tr)
+
+References
+Tibshirani R, Hastie T, Narasimhan B, et al. (2002). Diagnosis of multiple cancer types by shrunken centroids of gene expression PNAS 99: 6567-72.
+Dudoit S, Fridlyand J, Speed TP (2000). Comparison of Discrimination Methods for the Classification of Tumors Using Gene Expression Data. (Statistics, UC Berkeley, June 2000, Tech Report \#576)
+Law CW, Chen Y, Shi W, et al. (2014). voom: precision weights unlock linear model analysis tools for RNA-seq read counts. Genome Biology, doi:10.1186/gb-2014-15-2-r29
+
+Examples
+#use cervical data in MLSeq package
+library(MLSeq)
+data(cervical)
+
+#create cervical conditions, train and test sets
+set.seed(12345)
+ratio=0.7
+conditions = factor(rep(c("N","T"), c(29,29)))
+ind = sample(58, ceiling(58*ratio), FALSE)
+train = cervical[,ind]
+test = cervical[,-ind]
+tr.cond = conditions[ind]
+ts.cond = conditions[-ind]
+
+#apply a voomNSC with TMM normalization
+fit = voomNSC.train(counts = train, conditions = tr.cond, normalization = "TMM")
+
+#predict the labels of test data classes with the optimum threshold value and create a confusion matrix
+pred = predict.voomNSC(fit, test)
+table(ts.cond, pred)
+
+#use another threshold value
+pred2 = predict.voomNSC(fit, test, 1.34)
+table(ts.cond, pred2)
+
+####

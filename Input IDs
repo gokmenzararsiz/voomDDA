@@ -1,0 +1,10 @@
+
+
+	Input ID                 	Type                    Description
+-------------------------------------------------------------------------------------------------------------
+	dataInput				Radio Buttons			Used for data input selection (Load Example / Upload)
+	sampleData				Radio Buttons			Example data sets (Alzheimer and Cervical)
+	uploadTrain				File input				Uploaded train data
+	uploadCond				File input				Uploaded class labels
+	uploadTest				File input				Uploaded test set
+	fileSepDF				Radio Buttons			File speration type ("tab", "comma" etc.)

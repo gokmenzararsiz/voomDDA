@@ -1,0 +1,2 @@
+Dincer ile voomDDA kodları yazıldı. pamr paketi ve sfsmisc paketlerinde yer alan DLDA, DQDA ve NSC kodları weighted statistics'i dikkate alacak şekilde güncellendi. Problem test setinin train parametrelerini kullanmaması.
+Quantile ve TMM normalizasyonları ile uygulamalar yapıldı. Sonucları Bernd'e gönderildi.
